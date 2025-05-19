@@ -15,6 +15,10 @@ const swaggerDocs = {
       url: 'http://localhost:5000',
       description: 'Development server',
     },
+    {
+      url: 'https://vote-backend-be2f.onrender.com',
+      description: 'Deployed server',
+    },
   ],
   paths: {
     '/api/admin/signup': {
