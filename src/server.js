@@ -56,6 +56,141 @@ const swaggerDocs = {
         },
       },
     },
+    '/api/admin/verify-email': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Verify admin email',
+        description: 'Verify admin email using the verification token',
+        parameters: [
+          {
+            in: 'query',
+            name: 'token',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Email verified successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Invalid or expired token',
+          },
+        },
+      },
+    },
+    '/api/admin/forgot-password': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Request password reset',
+        description: 'Send password reset email to admin',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password reset email sent successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Invalid email',
+          },
+        },
+      },
+    },
+    '/api/admin/reset-password': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Reset admin password',
+        description: 'Reset admin password using the reset token',
+        parameters: [
+          {
+            in: 'query',
+            name: 'token',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['password'],
+                properties: {
+                  password: {
+                    type: 'string',
+                    format: 'password',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password reset successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Invalid or expired token',
+          },
+        },
+      },
+    },
     '/api/admin/login': {
       post: {
         tags: ['Admin'],
