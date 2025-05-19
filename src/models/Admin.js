@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const adminSchema = new mongoose.Schema({
   email: {
@@ -12,6 +13,22 @@ const adminSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: {
+    type: String
+  },
+  verificationTokenExpires: {
+    type: Date
+  },
+  passwordResetToken: {
+    type: String
+  },
+  passwordResetTokenExpires: {
+    type: Date
   },
   createdAt: {
     type: Date,
