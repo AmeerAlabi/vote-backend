@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 const adminSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
+    unique: true
   },
   password: {
     type: String,
@@ -18,36 +16,37 @@ const adminSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  verificationToken: {
-    type: String
-  },
-  verificationTokenExpires: {
-    type: Date
-  },
-  passwordResetToken: {
-    type: String
-  },
-  passwordResetTokenExpires: {
-    type: Date
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  verificationCode: String,
+  verificationCodeExpires: Date,
+  passwordResetToken: String,
+  passwordResetTokenExpires: Date
 });
 
 // Hash password before saving
 adminSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
   }
+  next();
 });
+
+// Generate verification code
+adminSchema.methods.generateVerificationCode = function() {
+  // Generate a 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  this.verificationCode = code;
+  this.verificationCodeExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+  return code;
+};
+
+// Generate password reset code
+adminSchema.methods.generatePasswordResetCode = function() {
+  // Generate a 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  this.passwordResetToken = code;
+  this.passwordResetTokenExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+  return code;
+};
 
 // Method to compare passwords
 adminSchema.methods.comparePassword = async function(candidatePassword) {

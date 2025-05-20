@@ -73,22 +73,32 @@ router.post('/login', adminController.login);
 /**
  * @swagger
  * /api/admin/verify-email:
- *   get:
- *     summary: Verify admin email
+ *   post:
+ *     summary: Verify admin email with code
  *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         schema:
- *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               code:
+ *                 type: string
+ *                 description: Verification code received in email
  *     responses:
  *       200:
  *         description: Email verified successfully
  *       400:
- *         description: Invalid or expired token
+ *         description: Invalid or expired verification code
  */
-router.get('/verify-email', adminController.verifyEmail);
+router.post('/verify-email', adminController.verifyEmailWithCode);
 
 /**
  * @swagger
@@ -122,12 +132,6 @@ router.post('/forgot-password', adminController.forgotPassword);
  *   post:
  *     summary: Reset admin password
  *     tags: [Admin]
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         schema:
- *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -135,16 +139,38 @@ router.post('/forgot-password', adminController.forgotPassword);
  *           schema:
  *             type: object
  *             required:
+ *               - email
+ *               - code
  *               - password
  *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email address of the admin
+ *               code:
+ *                 type: string
+ *                 description: Reset code received in email
  *               password:
  *                 type: string
  *                 format: password
+ *                 description: New password
  *     responses:
  *       200:
  *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *                   description: JWT token for immediate login after reset
  *       400:
- *         description: Invalid or expired token
+ *         description: Invalid or expired reset code
+ *       404:
+ *         description: Admin not found
  */
 router.post('/reset-password', adminController.resetPassword);
 

@@ -113,15 +113,19 @@ exports.confirmVoterCode = async (req, res) => {
       }
     };
     
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ voteToken: token });
-      }
-    );
+    try {
+      // Generate token synchronously to handle errors properly
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
+      
+      res.json({ 
+        message: 'Verification successful',
+        token: token,  // Standard token field name
+        voteToken: token  // Keep for backward compatibility
+      });
+    } catch (tokenError) {
+      console.error('Error generating token:', tokenError);
+      return res.status(500).json({ message: 'Error generating authentication token' });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -155,9 +159,16 @@ exports.castVote = async (req, res) => {
     }
     
     // Check if voter has already voted
+    // Handle both token formats for compatibility
+    const voterEmail = req.voter.email || (req.voter.voter && req.voter.voter.email);
+    
+    if (!voterEmail) {
+      return res.status(401).json({ message: 'Invalid voter token structure' });
+    }
+    
     const existingVote = await Vote.findOne({ 
       electionId, 
-      voterEmail: req.voter.voter.email 
+      voterEmail: voterEmail 
     });
     
     if (existingVote) {
@@ -168,13 +179,16 @@ exports.castVote = async (req, res) => {
     const vote = new Vote({
       electionId,
       candidateId,
-      voterEmail: req.voter.voter.email
+      voterEmail: voterEmail
     });
     
     await vote.save();
     
-    // Delete voter session
-    await VoterSession.findByIdAndDelete(req.voter.voter.sessionId);
+    // Delete voter session - handle both token formats
+    const sessionId = req.voter.sessionId || (req.voter.voter && req.voter.voter.sessionId);
+    if (sessionId) {
+      await VoterSession.findByIdAndDelete(sessionId);
+    }
     
     res.json({
       message: 'Vote cast successfully',
