@@ -2,6 +2,48 @@ const Election = require('../models/Election');
 const Candidate = require('../models/Candidate');
 const Vote = require('../models/Vote');
 
+// Get all candidates (admin only)
+exports.getAllCandidates = async (req, res) => {
+  try {
+    const candidates = await Candidate.find()
+      .populate('election', 'title')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      candidates,
+      count: candidates.length
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get candidates for a specific election
+exports.getCandidatesByElection = async (req, res) => {
+  try {
+    const { electionId } = req.params;
+    
+    // Check if election exists
+    const election = await Election.findById(electionId);
+    if (!election) {
+      return res.status(404).json({ message: 'Election not found' });
+    }
+    
+    const candidates = await Candidate.find({ election: electionId })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      electionId,
+      candidates,
+      count: candidates.length
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Create a new election
 exports.createElection = async (req, res) => {
   try {

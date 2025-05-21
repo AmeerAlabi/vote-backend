@@ -9,6 +9,12 @@ router.post('/', adminAuth, electionController.createElection);
 // Add a candidate to an election (admin only)
 router.post('/:electionId/candidates', adminAuth, electionController.addCandidate);
 
+// Get all candidates (admin only)
+router.get('/candidates', adminAuth, electionController.getAllCandidates);
+
+// Get candidates for a specific election (public)
+router.get('/:electionId/candidates', electionController.getCandidatesByElection);
+
 // Get election details (public)
 router.get('/:electionId', electionController.getElectionDetails);
 
