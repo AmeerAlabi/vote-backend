@@ -1,6 +1,7 @@
 const Election = require('../models/Election');
 const Candidate = require('../models/Candidate');
 const Vote = require('../models/Vote');
+const cloudinary = require('../config/cloudinary');
 
 // Get all candidates (admin only)
 exports.getAllCandidates = async (req, res) => {
@@ -79,40 +80,117 @@ exports.createElection = async (req, res) => {
 exports.addCandidate = async (req, res) => {
   try {
     const { electionId } = req.params;
-    const { name, bio, photoUrl } = req.body;
-    
+    const { name, bio } = req.body;
+
     // Validate input
-    if (!name || !bio) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
+    if (!name || !bio || !req.file) {
+      return res.status(400).json({ message: 'Please provide all required fields (name, bio, and photo)' });
     }
-    
+
     // Check if election exists
     const election = await Election.findById(electionId);
     if (!election) {
       return res.status(404).json({ message: 'Election not found' });
     }
-    
+
     // Check if admin owns this election
     if (election.createdBy.toString() !== req.admin.admin.id) {
       return res.status(403).json({ message: 'Not authorized to modify this election' });
     }
-    
+
+    // Handle image upload to Cloudinary
+    let photoUrl;
+    try {
+      console.log('Starting Cloudinary upload...');
+      
+      if (!req.file) {
+        throw new Error('No file uploaded');
+      }
+
+      // Log file info for debugging
+      console.log('File info:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        buffer: req.file.buffer ? `Buffer(${req.file.buffer.length} bytes)` : 'No buffer'
+      });
+
+      // Create a promise-based upload
+      const uploadPromise = new Promise((resolve, reject) => {
+        try {
+          // Create a stream from the buffer
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: `elections/${electionId}`,
+              resource_type: 'image',
+              format: 'jpg',
+              timeout: 60000 // 60 seconds timeout
+            },
+            (error, result) => {
+              if (error) {
+                console.error('Cloudinary upload error:', error);
+                return reject(error);
+              }
+              resolve(result);
+            }
+          );
+          
+          // Check if buffer exists and is valid
+          if (!req.file.buffer || !Buffer.isBuffer(req.file.buffer)) {
+            throw new Error('Invalid file buffer');
+          }
+          
+          // Write the buffer to the upload stream
+          uploadStream.end(req.file.buffer);
+          
+        } catch (streamError) {
+          console.error('Error creating upload stream:', streamError);
+          reject(streamError);
+        }
+      });
+      
+      console.log('Starting Cloudinary upload...');
+      const uploadResult = await uploadPromise;
+      
+      console.log('Cloudinary upload successful:', {
+        url: uploadResult.secure_url,
+        format: uploadResult.format,
+        bytes: uploadResult.bytes
+      });
+      
+      photoUrl = uploadResult.secure_url;
+    } catch (uploadError) {
+      console.error('Error in file upload process:', {
+        message: uploadError.message,
+        code: uploadError.code,
+        http_code: uploadError.http_code,
+        name: uploadError.name,
+        stack: uploadError.stack
+      });
+      return res.status(500).json({ 
+        message: 'Error processing file upload', 
+        error: uploadError.message,
+        details: process.env.NODE_ENV === 'development' ? uploadError.stack : undefined
+      });
+    }
+
     // Create new candidate
     const candidate = new Candidate({
       electionId,
       name,
       bio,
-      photoUrl: photoUrl || 'https://via.placeholder.com/150'
+      photoUrl,
     });
-    
+
     await candidate.save();
-    
+
     res.status(201).json({
       message: 'Candidate added successfully',
-      candidateId: candidate._id
+      candidateId: candidate._id,
+      candidate,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Add candidate error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -2,12 +2,18 @@ const express = require('express');
 const router = express.Router();
 const electionController = require('../controllers/electionController');
 const { adminAuth } = require('../middleware/auth');
+const { upload, handleMulterError } = require('../middleware/multer');
 
 // Create a new election (admin only)
 router.post('/', adminAuth, electionController.createElection);
 
 // Add a candidate to an election (admin only)
-router.post('/:electionId/candidates', adminAuth, electionController.addCandidate);
+router.post('/:electionId/candidates', 
+  adminAuth, 
+  upload.single('photo'), 
+  handleMulterError, 
+  electionController.addCandidate
+);
 
 // Get all candidates (admin only)
 router.get('/candidates', adminAuth, electionController.getAllCandidates);
