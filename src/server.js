@@ -1,7 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
 
 const swaggerDocs = {
@@ -984,7 +984,6 @@ const swaggerDocs = {
 
 module.exports = swaggerDocs;
 // Load environment variables from .env file (optional, kept for PORT)
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Import routes
 const adminRoutes = require('./routes/adminRoutes');

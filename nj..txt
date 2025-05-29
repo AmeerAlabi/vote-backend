@@ -1,0 +1,90 @@
+// 1. Admin Signup
+POST /api/admin/signup
+{
+    "email": "admin@school.edu",
+    "password": "Admin123!"
+}
+
+// 2. Admin Login
+POST /api/admin/login
+{
+    "email": "admin@school.edu",
+    "password": "Admin123!"
+}
+// Response will include a JWT token - save it for admin-only routes
+
+
+
+// 1. Create Election (Admin only)
+POST /api/elections
+Headers: {
+    "Authorization": "Bearer YOUR_ADMIN_TOKEN"
+}
+{
+    "title": "Student Council Election 2025",
+    "description": "Annual student council election for 2025",
+    "allowedDomains": ["school.edu", "student.school.edu"]
+}
+
+// 2. Add Candidate (Admin only)
+POST /api/elections/:electionId/candidates
+Headers: {
+    "Authorization": "Bearer YOUR_ADMIN_TOKEN"
+}
+{
+    "name": "John Smith",
+    "position": "President",
+    "manifesto": "Building a better future for our school"
+}
+
+// 3. Get Election Details (Public)
+GET /api/elections/:electionId
+
+// 4. Get Election Results (Admin only)
+GET /api/elections/:electionId/results
+Headers: {
+    "Authorization": "Bearer YOUR_ADMIN_TOKEN"
+}
+
+// 5. Get All Elections (Admin only)
+GET /api/elections
+Headers: {
+    "Authorization": "Bearer YOUR_ADMIN_TOKEN"
+}
+
+// 6. Update Election Status (Admin only)
+PATCH /api/elections/:electionId/status
+Headers: {
+    "Authorization": "Bearer YOUR_ADMIN_TOKEN"
+}
+{
+    "active": true
+}
+
+
+
+
+
+// 1. Verify Voter Email
+POST /api/vote/:electionId/verify
+{
+    "email": "student@school.edu"
+}
+// Response includes sessionId - save it for next step
+
+// 2. Confirm Voter Code
+POST /api/vote/:electionId/confirm
+{
+    "sessionId": "SESSION_ID_FROM_PREVIOUS_STEP",
+    "code": "123456"  // Code received in email
+}
+// Response includes voteToken - save it for voting
+
+// 3. Cast Vote
+POST /api/vote/:electionId
+Headers: {
+    "Authorization": "Bearer YOUR_VOTE_TOKEN"
+}
+{
+    "candidateId": "CANDIDATE_ID"
+}
