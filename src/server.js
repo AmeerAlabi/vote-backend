@@ -990,16 +990,83 @@ const adminRoutes = require('./routes/adminRoutes');
 const electionRoutes = require('./routes/electionRoutes');
 const voteRoutes = require('./routes/voteRoutes');
 
-// Initialize express app
-const app = express();
+// Add these imports with your existing ones
+const http = require('http');
+const socketIo = require('socket.io');
+const monitorRoutes = require('./routes/monitorRoutes');
 
-// Middleware
+// Replace your app creation with this:
+const app = express();
+const server = http.createServer(app);
+
+// Add Socket.IO
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Your existing middleware
 app.use(cors());
 app.use(express.json());
 
-// Hardcoded MongoDB connection URL
+// Make io accessible to routes
+app.set('io', io);
 
-// MongoDB connection with retry logic and enhanced error handling
+// Serve Swagger documentation
+app.get('/api-docs', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>School Voting System API Documentation</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css">
+      </head>
+      <body>
+        <div id="swagger-ui"></div>
+        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+        <script>
+          window.onload = () => {
+            window.ui = SwaggerUIBundle({
+              spec: ${JSON.stringify(swaggerDocs)},
+              dom_id: '#swagger-ui',
+            });
+          };
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+// Your existing routes
+app.use('/api/admin', adminRoutes);
+app.use('/api/elections', electionRoutes);
+app.use('/api/vote', voteRoutes);
+
+// Add the new monitoring route
+app.use('/monitor', monitorRoutes);
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('Client connected for real-time updates:', socket.id);
+
+  socket.on('join-election', (electionId) => {
+    socket.join(`election-${electionId}`);
+    console.log(`Client ${socket.id} joined election room: election-${electionId}`);
+  });
+
+  socket.on('leave-election', (electionId) => {
+    socket.leave(`election-${electionId}`);
+    console.log(`Client ${socket.id} left election room: election-${electionId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// Your existing MongoDB connection function stays the same
 const connectToMongoDB = async (retries = 3, delay = 5000) => {
   console.log(process.env.MONGO_URI);
   

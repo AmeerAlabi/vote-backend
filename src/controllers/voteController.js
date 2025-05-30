@@ -184,15 +184,30 @@ exports.castVote = async (req, res) => {
     
     await vote.save();
     
+    // ADD THIS PART HERE - Real-time update emission
+    const io = req.app.get('io');
+    if (io) {
+      // Emit real-time update to all clients monitoring this election
+      io.to(`election-${vote.electionId}`).emit('vote-update', {
+        electionId: vote.electionId,
+        candidateId: vote.candidateId,
+        timestamp: new Date()
+      });
+      
+      console.log(`Real-time update sent for election: ${vote.electionId}`);
+    }
+    
     // Delete voter session - handle both token formats
     const sessionId = req.voter.sessionId || (req.voter.voter && req.voter.voter.sessionId);
     if (sessionId) {
       await VoterSession.findByIdAndDelete(sessionId);
     }
     
+    // MODIFY THIS RESPONSE to include monitor URL:
     res.json({
       message: 'Vote cast successfully',
-      voteId: vote._id
+      voteId: vote._id,
+      monitorUrl: `${req.protocol}://${req.get('host')}/monitor/election/${vote.electionId}`
     });
   } catch (error) {
     console.error(error);
