@@ -1002,8 +1002,13 @@ const server = http.createServer(app);
 // Add Socket.IO
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: [
+      process.env.CLIENT_URL || "http://localhost:3000",
+      "https://cast-vote.vercel.app", // Add your deployed frontend URL here
+      "http://localhost:3000" // Keep localhost for development
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
