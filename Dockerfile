@@ -13,6 +13,11 @@ WORKDIR /app
 
 RUN install-php-extensions pdo_pgsql pdo_mysql gd intl zip bcmath opcache
 
+# The base image grants frankenphp cap_net_bind_service so it can bind :80.
+# Render's sandbox refuses to exec binaries carrying file capabilities
+# ("Operation not permitted"); we listen on 8080 so the capability is unneeded.
+RUN setcap -r /usr/local/bin/frankenphp || true
+
 COPY laravel/ ./
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
