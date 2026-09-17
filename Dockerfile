@@ -22,6 +22,7 @@ COPY laravel/ ./
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
+COPY docker/Caddyfile /etc/frankenphp/Caddyfile
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
     && chmod +x /usr/local/bin/entrypoint \
     && chown -R www-data:www-data storage bootstrap/cache
@@ -29,8 +30,7 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
 ENV APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
-    PORT=8080 \
-    SERVER_NAME=:8080
+    PORT=8080
 
 EXPOSE 8080
 ENTRYPOINT ["entrypoint"]

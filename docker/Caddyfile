@@ -1,0 +1,12 @@
+{
+	frankenphp
+	# Caddy's admin API (port 2019) must stay closed: Render probes for the
+	# first open port and would route traffic to it instead of the app.
+	admin off
+}
+
+:{$PORT:8080} {
+	root /app/public
+	encode zstd br gzip
+	php_server
+}
