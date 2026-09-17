@@ -41,7 +41,7 @@ Run the test suite with:
 | `DB_*` | Database connection. `DB_CONNECTION=sqlite` needs nothing else. |
 | `MAIL_MAILER`, `RESEND_API_KEY`, `MAIL_FROM_ADDRESS` | Email delivery. |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Photo storage. |
-| `QUEUE_CONNECTION` | `database` (needs `php artisan queue:work`) or `sync` to send mail inline. |
+| `QUEUE_CONNECTION` | `sync` sends mail inline during the request (default on Render, where the free tier has no worker); `database` queues it for `php artisan queue:work`. |
 
 ## API overview
 
