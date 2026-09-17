@@ -15,8 +15,9 @@ RUN install-php-extensions pdo_pgsql pdo_mysql gd intl zip bcmath opcache
 
 COPY laravel/ ./
 COPY --from=vendor /app/vendor ./vendor
+COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
-RUN composer dump-autoload --optimize --classmap-authoritative \
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
     && chmod +x /usr/local/bin/entrypoint \
     && chown -R www-data:www-data storage bootstrap/cache
 
