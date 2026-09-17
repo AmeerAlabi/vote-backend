@@ -20,7 +20,7 @@ services:
           name: vote-db
           property: connectionString
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync           # send email inline; no worker needed on the free tier
       - key: SESSION_DRIVER
         value: cookie
       - key: CACHE_STORE
@@ -40,6 +40,8 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
 
+  # Optional: only on paid plans (free tier has no background workers). If you
+  # add it, switch the web service to QUEUE_CONNECTION=database.
   - type: worker
     name: vote-worker
     runtime: docker
