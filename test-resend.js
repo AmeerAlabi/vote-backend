@@ -15,7 +15,7 @@ async function testResendDirectly() {
     console.log('Sending test email with the following configuration:');
     console.log({
       from: process.env.SENDER_EMAIL,
-      to: 'ameeralabi7@gmail.com', // The email you're trying to verify
+      to: 'ameertaiwo@gmail.com', // The email you're trying to verify
       subject: 'Test Email from Resend API',
       html: '<h1>This is a test email</h1><p>If you receive this, the Resend API is working correctly.</p>'
     });
@@ -23,7 +23,7 @@ async function testResendDirectly() {
     // Send the test email
     const { data, error } = await resend.emails.send({
       from: process.env.SENDER_EMAIL,
-      to: 'ameeralabi7@gmail.com', // Must match the email used to create the Resend API key
+      to: 'ameertaiwo@gmail.com', // The email you're trying to verify
       subject: 'Test Email from Resend API',
       html: '<h1>This is a test email</h1><p>If you receive this, the Resend API is working correctly.</p>'
     });
