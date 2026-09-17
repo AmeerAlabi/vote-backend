@@ -1,0 +1,23 @@
+# Secrets — never commit environment files
+.env
+.env.*
+!.env.example
+env-temp.txt
+
+# Dependencies
+node_modules/
+laravel/vendor/
+
+# Laravel runtime files
+laravel/storage/*.key
+laravel/storage/app/openapi.json
+laravel/database/database.sqlite
+laravel/.phpunit.result.cache
+laravel/.phpunit.cache/
+laravel/public/storage
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

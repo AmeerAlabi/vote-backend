@@ -1,0 +1,86 @@
+# Render blueprint: web service + background worker + Postgres.
+# Set the secret values in the Render dashboard after the first deploy.
+services:
+  - type: web
+    name: vote-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /up
+    envVars:
+      - key: APP_KEY
+        sync: false              # php artisan key:generate --show
+      - key: APP_URL
+        sync: false              # https://<service>.onrender.com
+      - key: CLIENT_URL
+        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: vote-db
+          property: connectionString
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: CACHE_STORE
+        value: database
+      - key: MAIL_MAILER
+        value: resend
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: School Voting App
+      - key: RESEND_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  - type: worker
+    name: vote-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: sh /app/docker/worker.sh
+    envVars:
+      - key: RUN_MIGRATIONS
+        value: "false"           # the web service migrates
+      - fromService:
+          type: web
+          name: vote-api
+          envVarKey: APP_KEY
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: vote-db
+          property: connectionString
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: MAIL_MAILER
+        value: resend
+      - fromService:
+          type: web
+          name: vote-api
+          envVarKey: MAIL_FROM_ADDRESS
+      - fromService:
+          type: web
+          name: vote-api
+          envVarKey: RESEND_API_KEY
+      - fromService:
+          type: web
+          name: vote-api
+          envVarKey: APP_URL
+      - fromService:
+          type: web
+          name: vote-api
+          envVarKey: CLIENT_URL
+
+databases:
+  - name: vote-db
+    plan: free

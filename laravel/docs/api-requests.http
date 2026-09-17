@@ -1,0 +1,163 @@
+### School Voting API — request collection
+### Works with the VS Code "REST Client" extension (or JetBrains HTTP client).
+### Set @host to your deployment; run the requests top to bottom.
+
+@host = http://localhost:8000
+@adminEmail = admin@school.edu
+@adminPassword = Admin123!
+
+### ---------------------------------------------------------------- Admin
+
+### 1. Sign up (a verification code is emailed; with MAIL_MAILER=log it lands in storage/logs/laravel.log)
+POST {{host}}/api/admin/signup
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+### 2. Verify email with the emailed code → returns a token
+POST {{host}}/api/admin/verify-email
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "code": "123456" }
+
+### 3. Login
+# @name login
+POST {{host}}/api/admin/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+@adminToken = {{login.response.body.token}}
+
+### 4. Forgot password → emails a reset code
+POST {{host}}/api/admin/forgot-password
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}" }
+
+### 5. Reset password with the code → returns a token
+POST {{host}}/api/admin/reset-password
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "code": "123456", "password": "NewPass123!" }
+
+### ------------------------------------------------------------ Elections
+
+### 6. Create election (admin)
+# @name createElection
+POST {{host}}/api/elections
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "Student Council Election 2026",
+  "description": "Annual student council election",
+  "allowedDomains": ["school.edu", "student.school.edu"]
+}
+
+@electionId = {{createElection.response.body.electionId}}
+
+### 7. List my elections (admin)
+GET {{host}}/api/elections
+Authorization: Bearer {{adminToken}}
+
+### 8. Election details (public)
+GET {{host}}/api/elections/{{electionId}}
+
+### 9. Update election (admin, owner)
+PATCH {{host}}/api/elections/{{electionId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "title": "Student Council Election 2026 (updated)" }
+
+### 10. Activate / deactivate (admin, owner)
+PATCH {{host}}/api/elections/{{electionId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "active": true }
+
+### 11. Add candidate with photo (admin, owner) — multipart
+# @name addCandidate
+POST {{host}}/api/elections/{{electionId}}/candidates
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="name"
+
+Jane Doe
+------Boundary
+Content-Disposition: form-data; name="bio"
+
+Passionate leader
+------Boundary
+Content-Disposition: form-data; name="photo"; filename="jane.jpg"
+Content-Type: image/jpeg
+
+< ./jane.jpg
+------Boundary--
+
+@candidateId = {{addCandidate.response.body.candidateId}}
+
+### 12. Candidates for an election (public)
+GET {{host}}/api/elections/{{electionId}}/candidates
+
+### 13. All my candidates (admin)
+GET {{host}}/api/elections/candidates
+Authorization: Bearer {{adminToken}}
+
+### 14. Update candidate text (admin, owner)
+PATCH {{host}}/api/elections/{{electionId}}/candidates/{{candidateId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "bio": "Updated bio" }
+
+### 15. Results (admin, owner)
+GET {{host}}/api/elections/{{electionId}}/results
+Authorization: Bearer {{adminToken}}
+
+### 16. Delete candidate (admin, owner)
+DELETE {{host}}/api/elections/{{electionId}}/candidates/{{candidateId}}
+Authorization: Bearer {{adminToken}}
+
+### 17. Delete election (admin, owner)
+DELETE {{host}}/api/elections/{{electionId}}
+Authorization: Bearer {{adminToken}}
+
+### --------------------------------------------------------------- Voting
+
+### 18. Verify voter email → emails a code, returns sessionId
+# @name verify
+POST {{host}}/api/vote/{{electionId}}/verify
+Content-Type: application/json
+
+{ "email": "student@school.edu" }
+
+@sessionId = {{verify.response.body.sessionId}}
+
+### 19. Confirm code → returns a 15-minute vote token
+# @name confirm
+POST {{host}}/api/vote/{{electionId}}/confirm
+Content-Type: application/json
+
+{ "sessionId": "{{sessionId}}", "code": "123456" }
+
+@voteToken = {{confirm.response.body.token}}
+
+### 20. Cast vote
+POST {{host}}/api/vote/{{electionId}}
+Authorization: Bearer {{voteToken}}
+Content-Type: application/json
+
+{ "candidateId": "{{candidateId}}" }
+
+### -------------------------------------------------------------- Monitor
+
+### 21. Live results JSON (public)
+GET {{host}}/api/monitor/results/{{electionId}}
+
+### 22. Live results page (public, open in a browser)
+GET {{host}}/monitor/election/{{electionId}}
