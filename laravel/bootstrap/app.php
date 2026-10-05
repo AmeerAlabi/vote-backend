@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [MapLegacyTokenHeaders::class]);
+
+        // Render (like most PaaS) terminates TLS at its load balancer and
+        // forwards plain HTTP. Without this, generated links — the monitorUrl
+        // returned after a vote, the docs server URL — come out as http://.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
